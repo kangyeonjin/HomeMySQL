@@ -154,4 +154,81 @@ from
     tbl_category a
 join tbl_category b on a.ref_category_code=b.category_code;
 
+#goruping
+select category_code from tbl_menu group by category_code;
 
+select category_code,sum(menu_price)
+from tbl_menu group by category_code;
+
+select menu_price,category_code
+from tbl_menu group by menu_price,category_code
+having category_code >=5 and category_code <=8 -- 그룹의 조건절
+order by menu_price;
+
+select category_code,sum(menu_price)
+from tbl_menu group by category_code with rollup; -- 총합도 같이나옴
+
+# 서브쿼리
+select menu_code, menu_name, menu_price, orderable_status
+from tbl_menu where category_code = (
+    select category_code
+    from tbl_menu
+    where menu_name ='민트미역국'
+    ); -- 서브쿼리실행시 미역국메뉴의 카테코리코드가 반환됨
+      -- 반환된 코드로 메인쿼리에서 다시 실행됨
+
+#다중행 서브쿼리
+select max(menu_price) from tbl_menu;
+select * from tbl_menu where menu_price >= all(
+    select menu_price from tbl_menu
+);
+
+#exists
+select a.category_code, a.category_name
+from tbl_category a
+where not exists(
+    select category_code
+    from tbl_menu b
+    where b.category_code = a.category_code
+);
+#스칼라서브쿼리 : 반환행수가 1행보다 많을수없다
+select a.menu_name,
+       (select category_name
+    from tbl_category b
+    where b.category_code = a.category_code)
+category_name
+from tbl_menu a;
+
+#cte(from 절에서만 사용가능)
+-- 재귀공통테이블 표현식은 자체이름을 참조하는 하위 쿼리가 있는 표현식
+with menucate as -- 임시저장공간(파생테이블) 만들어주기
+    (select menu_name,category_name  -- 괄호안의 코드 먼저실행후에 반환된코드를
+    from tbl_menu a join tbl_category b  -- 임시공간에 담겨진 메인코드와 함께 실행함
+    on a.category_code = b.category_code)
+select * from menucate order by menu_name;
+
+#union : 두개이상 select결과문을 결합하여 중복제거후 반환
+#union all : 중복제거 안하고 모두 반환
+select * from tbl_menu where category_code =10
+union select * from tbl_menu where menu_price < 9000;
+
+#inner join(교집합)
+select a.* from tbl_menu a inner join #2.모든열을 선택해서 서브쿼리 결과와 menu_code기준으로 조인함
+ (select * from tbl_menu where menu_price <9000 #1.9000보다작은모든메뉴를 b에 담음
+)b on(a.menu_code = b.menu_code) #3.9000보다 작은메뉴와 동일한memu_code만 선택됨
+where a.category_code =10; #4.결과 : 메뉴가격이 9000보다 작고 카테코리코드가 10인것이 최종
+
+select * from tbl_menu a
+    where category_code =10 and menu_code in(
+        select menu_code from tbl_menu where menu_price < 9000
+        );  #위와 동일한 결과이지만 성늠면에서 더 좋음
+
+
+
+#minus
+-- 9000보다 작은얘들중에서 카테고리가 10인것만 선택함
+select a.* from tbl_menu a -- tbl_menu의 모든행 a를 서브쿼리결과 b와 조인함
+    left join(select * from tbl_menu where menu_price < 9000)
+b on(a.menu_code = b.menu_code)
+where a.category_code =10 and b.menu_code is null;
+-- b.menu_code is null은 서브쿼리결과와 조인되지않은 a의 행을 선택함
