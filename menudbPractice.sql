@@ -232,3 +232,9 @@ select a.* from tbl_menu a -- tbl_menu의 모든행 a를 서브쿼리결과 b와
 b on(a.menu_code = b.menu_code)
 where a.category_code =10 and b.menu_code is null;
 -- b.menu_code is null은 서브쿼리결과와 조인되지않은 a의 행을 선택함
+
+#DML
+select * from tbl_menu;
+
+#insert into[테이블명] values[컬럼내용]..
+insert into tbl_menu values (25,'바나나해장국',8500,4,'Y');
