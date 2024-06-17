@@ -15,6 +15,7 @@ public class Application2 {
         Statement stmt = null;
         ResultSet rset = null;
 
+
         try {
             Class.forName(driver);
 
